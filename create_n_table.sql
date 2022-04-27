@@ -1,8 +1,7 @@
 DROP TABLE IF EXISTS animals;
 DROP TABLE IF EXISTS breeds;
 DROP TABLE IF EXISTS animal_types;
-DROP TABLE IF EXISTS colors1;
-DROP TABLE IF EXISTS colors2;
+DROP TABLE IF EXISTS colors;
 DROP TABLE IF EXISTS age_upon_outcome_types;
 DROP TABLE IF EXISTS ages_upon_outcome;
 DROP TABLE IF EXISTS outcome_subtypes;
@@ -23,14 +22,9 @@ CREATE TABLE animal_types (
     FOREIGN KEY (breed_id) REFERENCES breeds(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-CREATE TABLE colors1 (
+CREATE TABLE colors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    color1 varchar(50) NOT NULL
-);
-
-CREATE TABLE colors2 (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    color2 varchar(50)
+    color varchar(50)
 );
 
 CREATE TABLE age_upon_outcome_types (
@@ -74,7 +68,7 @@ CREATE TABLE animals (
     animal_id varchar(10) NOT NULL,
     name varchar(100) NOT NULL CONSTRAINT df_name DEFAULT 'Unnamed',
     animal_type_id INTEGER,
-    color1_id INTEGER,
+    color1_id INTEGER NOT NULL,
     color2_id INTEGER,
     date_of_birth datetime NOT NULL,
     age_upon_outcome_id INTEGER,
@@ -82,8 +76,8 @@ CREATE TABLE animals (
     outcome_date_id INTEGER,
 
     FOREIGN KEY (animal_type_id) REFERENCES animal_types(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (color1_id) REFERENCES colors1(id) ON DELETE RESTRICT,
-    FOREIGN KEY (color2_id) REFERENCES colors2(id) ON DELETE RESTRICT,
+    FOREIGN KEY (color1_id) REFERENCES colors(id) ON DELETE RESTRICT,
+    FOREIGN KEY (color2_id) REFERENCES colors(id) ON DELETE RESTRICT,
     FOREIGN KEY (age_upon_outcome_id) REFERENCES ages_upon_outcome(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (outcome_type_id) REFERENCES outcome_types(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (outcome_date_id) REFERENCES outcome_dates(id) ON DELETE RESTRICT ON UPDATE CASCADE
