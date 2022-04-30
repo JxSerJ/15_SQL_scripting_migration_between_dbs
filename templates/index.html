@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HW 15.2</title>
+  <link rel="icon" href="/static/favicon_1.ico" type="image/x-icon">
+  <link href="/static/styles.min.css" rel="stylesheet">
+  <script src="/static/script.js"></script>
+</head>
+
+<body>
+
+<main class="container">
+  <div class="input_data_container">
+    <header class="container header">
+      <div class="header__wrapper">
+        <a href="/" class="header__logo-link">
+          <H1>Нормализация БД</H1>
+        </a>
+      </div>
+    </header>
+    <p><br>Будет произведена нормализация и запись данных из Старой БД в Новую БД посредством скрипта:
+      <b>{{sript_path}}</b><br></p>
+    <p><br>Если файл новой БД отсутствует он будет создан, если он существует, то будет очищен и перезаписан.</b><br></p>
+    <p><br>Старая БД: <b>{{old_bd}}</b></p>
+    <p>Новая БД: <b>{{new_bd}}</b><br></p>
+    <p class="atten"><br>Внимание!<br>Этот процесс занимает продолжительное время (более 2-х минут) даже на
+      мощных машинах, так как обработка java-машиной SQL запросов выполняется всего в один поток и изменить это видимо
+      нельзя.
+      <br>Не жмите на кнопку если не готовы ждать!<br></p>
+    <div>
+      <p style="padding: 0px">
+        <button onclick="showHide(); redirect_to(1)">Выполнить преобразование</button>
+      </p>
+      <div id="content-1-show" class="content-1-show">
+        <p class="atten"><br><img src="static/loading_icon.gif" alt="Loading...  "
+                                  style=" display: block; margin-left: auto; margin-right: auto;">Выполняется
+          преобразование. Ничего не трогайте, а то всё сломается :)</p>
+        <p>По окончании работы будет выведен результат.</p>
+      </div>
+    </div>
+  </div>
+  <div class="input_data_container">
+    <header class="container header">
+      <div class="header__wrapper">
+        <a href="/" class="header__logo-link">
+          <H1>Поиск по ID</H1>
+        </a>
+      </div>
+    </header>
+    <p><br>Поиск по OutcomeID в новой БД:</p>
+    <div>
+      <input id="step_2_1" type="text" PLACEHOLDER="Введите ID элемента" class="loader__input">
+    </div>
+    <div>
+      <p>
+        <button onclick="redirect_to(2)">Выполнить поиск</button>
+      </p>
+    </div>
+  </div>
+  <div class="input_data_container">
+    <header class="container header">
+      <div class="header__wrapper">
+        <a href="/" class="header__logo-link">
+          <H1>Выгрузить всё</H1>
+        </a>
+      </div>
+    </header>
+    <p><br>При нажатии на кнопку в ответ вывалится 100 первых записей новой БД в формате JSON</p>
+    <div>
+      <p>
+        <button onclick="redirect_to(3)">Выгрузить</button>
+      </p>
+    </div>
+  </div>
+</main>
+</body>
+
+</html>

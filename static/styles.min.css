@@ -1,0 +1,266 @@
+
+html {
+    line-height: 1;
+    -webkit-text-size-adjust: 100%
+}
+
+body {
+    margin: 0
+}
+
+main {
+    display: block
+}
+
+h1 {
+    font-size: 2em;
+    margin: 0.67em 0
+}
+
+hr {
+    box-sizing: content-box;
+    height: 0;
+    overflow: visible
+}
+
+pre {
+    font-family: monospace, monospace;
+    font-size: 1em
+}
+
+a {
+    background-color: transparent
+}
+
+abbr[title] {
+    border-bottom: none;
+    text-decoration: underline dotted
+}
+
+b,
+strong {
+    font-weight: bolder
+}
+
+code,
+kbd,
+samp {
+    font-family: monospace, monospace;
+    font-size: 1em
+}
+
+small {
+    font-size: 80%
+}
+
+sub,
+sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline
+}
+
+sub {
+    bottom: -0.25em
+}
+
+sup {
+    top: -0.5em
+}
+
+img {
+    border-style: none
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+    font-family: inherit;
+    line-height: 1.15;
+    margin: 0;
+    background-color: #ddd;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: black;
+    border: none;
+    border-radius: 4px;
+    font-size: 18px;
+    transition: background-color .3s linear;
+}
+
+button:hover {
+    background-color: #c0c0c0;
+    transition: background-color .3s linear;
+}
+
+button,
+input {
+    overflow: visible
+}
+
+button,
+select {
+    text-transform: none
+}
+
+fieldset {
+    padding: 0.35em 0.75em 0.625em
+}
+
+textarea {
+    overflow: auto
+}
+
+details {
+    display: block
+}
+
+summary {
+    display: list-item
+}
+
+template {
+    display: none
+}
+
+[hidden] {
+    display: none
+}
+
+body {
+    font-family: 'Arial', sans-sefir, serif;
+    font-size: 18px;
+    font-weight: 400;
+
+    color: #000;
+    background: #fff
+}
+
+a {
+    cursor: pointer
+}
+
+p {
+    line-height: 29px;
+    margin: 0;
+    padding: 0px 0px 10px
+}
+
+.atten {
+    line-height: 1.2;
+    font-size: 12px;
+    padding-bottom: 10px;
+}
+
+input,
+button,
+textarea {
+    box-sizing: border-box;
+    font-family: 'Arial', serif
+}
+
+.container {
+    padding-left: 00px;
+    padding-right: 30px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto
+}
+
+.header__wrapper {
+    position: relative;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px 0 0px
+}
+
+.header__logo-link {
+    text-decoration: none;
+    color: black;
+}
+
+.input_data_container {
+    padding-bottom: 28px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.25)
+}
+
+.loader {
+    padding-bottom: 28px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.25)
+}
+
+.loader__input {
+    display: inline-block;
+    width: 100%;
+    padding: 18px 18px 16px;
+    margin-bottom: 20px;
+    background: rgba(196, 196, 196, 0.25);
+    border-radius: 6px;
+    border: none;
+    box-shadow: none;
+    outline: solid;
+    outline-color: rgba(196, 196, 196, 0.25);
+    outline-width: 2px;
+    transition: outline-color .3s linear;
+}
+
+.loader__input:hover {
+    outline-color: black;
+    transition: outline .3s linear;
+}
+
+.loader__input:focus {
+    outline-color: black;
+    outline-width: 2px;
+}
+
+.sidepanel {
+    height: 100%;
+    width: 300px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 10px;
+    background: #eee;
+    overflow-x: hidden;
+    padding: 30px 20px;
+    transition: background .3s linear
+}
+
+.sidepanel:hover {
+    background: #ddd;
+    transition: background .3s linear
+}
+
+.content-1-show {
+    display: block;
+    font-size: 12px;
+    max-height: 0;
+    max-width: 600px;
+    opacity: 0;
+    transition: opacity 1s ease-out, max-height 1s ease-out;
+    overflow: hidden;
+}
+.content-1-show_visible {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    max-height: 500px;
+    max-width: 600px;
+    opacity: 1;
+    transition: opacity 400ms 600ms ease-in, max-height 600ms 0ms ease-in-out;
+}
+
+
