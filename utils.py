@@ -21,19 +21,15 @@ class DBHandler:
             cursor = connection.cursor()
 
             if script:
-                query_list = query.split(';')
-                i = 0
-                for query_entry in query_list:
-                    i += 1
-                    try:
-                        cursor.execute(query_entry.strip())
-                    except OperationalError as message:
-                        msg = f'Operation {i}, command: "{query_entry.strip()}": ' + str(message)
-                        return False, msg
-                    except:
-                        msg = f'Operation {i}, command: "{query_entry.strip()}": ' + 'unknown error'
-                        return False, msg
-                return True, None
+                try:
+                    cursor.executescript(query)
+                    return True, None
+                except OperationalError as message:
+                    msg = str(message)
+                    return False, msg
+                except:
+                    msg = 'unknown error'
+                    return False, msg
 
             elif values:
                 try:
