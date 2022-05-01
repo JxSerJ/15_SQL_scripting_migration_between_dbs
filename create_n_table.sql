@@ -1,6 +1,6 @@
--- ATTENTION!
--- Execute this script ONLY connected to a NEW database file!
--- If you execute script connected to original database your data can be corrupted or erased!
+-- ATTENTION! --
+-- Execute this script ONLY connected to a NEW database file! --
+-- If you execute script connected to original database your data can be corrupted or erased! --
 
 
 -- Cleanup new database file from previous attempt --
@@ -105,7 +105,7 @@ INSERT INTO orig_table SELECT * FROM orig_bd.animals;
 
 CREATE INDEX ix_animals_index ON orig_table ("index");
 
-DETACH orig_bd;
+
 
 -- Eliminating NULL-data in important columns --
 UPDATE orig_table SET outcome_subtype = 'no_data' WHERE outcome_subtype IS NULL;
@@ -203,4 +203,5 @@ ALTER TABLE animals DROP COLUMN orig_breed_id;
 UPDATE animals SET name = NULL WHERE name == 'no_data';
 
 DROP TABLE IF EXISTS orig_table;
+DETACH orig_bd;
 VACUUM;
