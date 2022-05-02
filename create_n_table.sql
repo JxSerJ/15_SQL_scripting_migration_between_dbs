@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS outcome_types;
 DROP TABLE IF EXISTS orig_table;
 DROP TABLE IF EXISTS outcomes_temp;
 DROP TABLE IF EXISTS animals_temp;
+DROP TABLE IF EXISTS animals_colors;
 
 VACUUM;
 
@@ -36,6 +37,14 @@ CREATE TABLE IF NOT EXISTS animal_types (
 CREATE TABLE IF NOT EXISTS colors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     color varchar(50)
+);
+
+CREATE TABLE IF NOT EXISTS animals_colors (
+    animal_id varchar(10),
+    colors_id INTEGER,
+
+    FOREIGN KEY (animal_id) REFERENCES animals(animal_id),
+    FOREIGN KEY (colors_id) REFERENCES colors(id)
 );
 
 CREATE TABLE IF NOT EXISTS age_upon_outcome_types (
@@ -61,12 +70,8 @@ CREATE TABLE IF NOT EXISTS animals (
     name varchar(100) CONSTRAINT df_name DEFAULT 'Unnamed',
     animal_type_id INTEGER,
     date_of_birth datetime NOT NULL,
-    color1_id INTEGER NOT NULL CONSTRAINT df_color DEFAULT 'no_data',
-    color2_id INTEGER,
 
-    FOREIGN KEY (animal_type_id) REFERENCES animal_types(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (color1_id) REFERENCES colors(id) ON DELETE RESTRICT,
-    FOREIGN KEY (color2_id) REFERENCES colors(id) ON DELETE RESTRICT
+    FOREIGN KEY (animal_type_id) REFERENCES animal_types(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS outcomes (
@@ -106,6 +111,8 @@ CREATE TABLE IF NOT EXISTS orig_table(
 INSERT INTO orig_table SELECT * FROM orig_bd.animals;
 
 CREATE INDEX ix_animals_index ON orig_table ("index");
+
+DETACH orig_bd;
 
 
 
@@ -202,8 +209,6 @@ CREATE TABLE IF NOT EXISTS animals_temp (
     name varchar(100) CONSTRAINT df_name DEFAULT 'Unnamed',
     animal_type_id INTEGER,
     date_of_birth datetime NOT NULL,
-    color1_id INTEGER NOT NULL CONSTRAINT df_color DEFAULT 'no_data',
-    color2_id INTEGER,
     color1 VARCHAR(50),
     color2 VARCHAR(50),
     orig_animal_type VARCHAR(50),
@@ -211,9 +216,7 @@ CREATE TABLE IF NOT EXISTS animals_temp (
     orig_animal_type_id INTEGER,
     orig_breed_id INTEGER,
 
-    FOREIGN KEY (animal_type_id) REFERENCES animal_types(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (color1_id) REFERENCES colors(id) ON DELETE RESTRICT,
-    FOREIGN KEY (color2_id) REFERENCES colors(id) ON DELETE RESTRICT
+    FOREIGN KEY (animal_type_id) REFERENCES animal_types(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 -- temp table (animals) --
 
@@ -222,8 +225,15 @@ INSERT INTO animals_temp (animal_id, name, date_of_birth) SELECT DISTINCT animal
 -- ALTER TABLE animals ADD color1 VARCHAR(50);
 -- ALTER TABLE animals ADD color2 VARCHAR(50);
 UPDATE animals_temp SET (color1, color2) = (SELECT TRIM(color1), TRIM(color2) FROM orig_table WHERE orig_table.animal_id = animals_temp.animal_id);
-UPDATE animals_temp SET color1_id = (SELECT id FROM colors WHERE colors.color = animals_temp.color1);
-UPDATE animals_temp SET color2_id = (SELECT id FROM colors WHERE colors.color = animals_temp.color2);
+
+INSERT INTO animals_colors (animal_id, colors_id)
+SELECT DISTINCT animals_temp.animal_id, colors.id FROM animals_temp
+JOIN colors ON animals_temp.color1 = colors.color
+UNION ALL
+SELECT DISTINCT animals_temp.animal_id, colors.id FROM animals_temp
+JOIN colors ON animals_temp.color2 = colors.color;
+
+CREATE INDEX ix_animal_colors_index ON animals_colors (animal_id);
 
 -- ALTER TABLE animals ADD orig_animal_type VARCHAR(50);
 -- ALTER TABLE animals ADD orig_breed VARCHAR(50);
@@ -238,9 +248,8 @@ UPDATE animals_temp SET animal_type_id = (SELECT animal_types.id FROM animal_typ
 
 UPDATE animals_temp SET name = NULL WHERE name == 'no_data';
 
-INSERT INTO animals (animal_id, name, animal_type_id, date_of_birth, color1_id, color2_id)
-SELECT animal_id, name, animal_type_id, date_of_birth, color1_id, color2_id
-FROM animals_temp;
+INSERT INTO animals (animal_id, name, animal_type_id, date_of_birth)
+SELECT animal_id, name, animal_type_id, date_of_birth FROM animals_temp;
 
 -- ALTER TABLE animals DROP COLUMN color1;
 -- ALTER TABLE animals DROP COLUMN color2;
@@ -256,5 +265,4 @@ FROM animals_temp;
 DROP TABLE IF EXISTS orig_table;
 DROP TABLE IF EXISTS outcomes_temp;
 DROP TABLE IF EXISTS animals_temp;
-DETACH orig_bd;
 VACUUM;

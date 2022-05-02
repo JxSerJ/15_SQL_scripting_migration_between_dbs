@@ -85,8 +85,7 @@ class DBHandler:
                  "animals.name, "
                  "animal_type, "
                  "breed AS animal_breed, "
-                 "c1.color AS color_primary, "
-                 "c2.color AS color_secondary, "
+                 "color, "
                  "date_of_birth "
                  "FROM outcomes "
                  "LEFT JOIN outcome_types ON outcomes.outcome_type_id = outcome_types.id "
@@ -95,11 +94,12 @@ class DBHandler:
                  "LEFT JOIN animals ON outcomes.animal_id = animals.animal_id "
                  "LEFT JOIN animal_types ON animals.animal_type_id = animal_types.id "
                  "LEFT JOIN breeds ON animal_types.breed_id = breeds.id "
-                 "LEFT JOIN colors c1 ON animals.color1_id = c1.id "
-                 "LEFT JOIN colors c2 ON animals.color2_id = c2.id "
+                 "JOIN animals_colors ON animals.animal_id = animals_colors.animal_id "
+                 "INNER JOIN colors on colors.id = animals_colors.colors_id "
                  "LIMIT 100 ")
         db_fetched_data = self.db_connector(self.new_db_path, query)
         data = []
+        print(db_fetched_data)
 
         for entry in db_fetched_data[0]:
             data.append(
@@ -115,9 +115,8 @@ class DBHandler:
                     "name": entry[8],
                     "animal_type": entry[9],
                     "animal_breed": entry[10],
-                    "color_primary": entry[11],
-                    "color_secondary": entry[12],
-                    "date_of_birth": entry[13]
+                    "color": entry[11],
+                    "date_of_birth": entry[12]
                 },
             )
 
@@ -137,8 +136,7 @@ class DBHandler:
                  "animals.name, "
                  "animal_type, "
                  "breed AS animal_breed, "
-                 "c1.color AS color_primary, "
-                 "c2.color AS color_secondary, "
+                 "color, "
                  "date_of_birth "
                  "FROM outcomes "
                  "LEFT JOIN outcome_types ON outcomes.outcome_type_id = outcome_types.id "
@@ -147,8 +145,8 @@ class DBHandler:
                  "LEFT JOIN animals ON outcomes.animal_id = animals.animal_id "
                  "LEFT JOIN animal_types ON animals.animal_type_id = animal_types.id "
                  "LEFT JOIN breeds ON animal_types.breed_id = breeds.id "
-                 "LEFT JOIN colors c1 ON animals.color1_id = c1.id "
-                 "LEFT JOIN colors c2 ON animals.color2_id = c2.id "
+                 "JOIN animals_colors ON animals.animal_id = animals_colors.animal_id "
+                 "INNER JOIN colors on colors.id = animals_colors.colors_id "
                  "WHERE outcomes.id == ? ")
 
         values = (item_id,)
@@ -171,9 +169,8 @@ class DBHandler:
                     "name": entry[8],
                     "animal_type": entry[9],
                     "animal_breed": entry[10],
-                    "color_primary": entry[11],
-                    "color_secondary": entry[12],
-                    "date_of_birth": entry[13]
+                    "color": entry[11],
+                    "date_of_birth": entry[12]
                 },
             )
 
