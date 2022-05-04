@@ -16,7 +16,7 @@ DROP TABLE IF EXISTS outcome_types;
 DROP TABLE IF EXISTS orig_table;
 DROP TABLE IF EXISTS outcomes_temp;
 DROP TABLE IF EXISTS animals_temp;
-DROP TABLE IF EXISTS animals_colors;
+DROP TABLE IF EXISTS animal_types_breeds;
 
 VACUUM;
 
@@ -29,22 +29,20 @@ CREATE TABLE IF NOT EXISTS breeds (
 
 CREATE TABLE IF NOT EXISTS animal_types (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    animal_type varchar(50) NOT NULL CONSTRAINT df_animal_type DEFAULT 'Cat',
+    animal_type varchar(50) NOT NULL CONSTRAINT df_animal_type DEFAULT 'Cat'
+);
+
+CREATE TABLE IF NOT EXISTS animal_types_breeds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    animal_type_id INTEGER,
     breed_id INTEGER,
-    FOREIGN KEY (breed_id) REFERENCES breeds(id) ON DELETE RESTRICT ON UPDATE CASCADE
+    FOREIGN KEY (breed_id) REFERENCES breeds(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (animal_type_id) REFERENCES animal_types(id)
 );
 
 CREATE TABLE IF NOT EXISTS colors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     color varchar(50)
-);
-
-CREATE TABLE IF NOT EXISTS animals_colors (
-    animal_id varchar(10),
-    colors_id INTEGER,
-
-    FOREIGN KEY (animal_id) REFERENCES animals(animal_id),
-    FOREIGN KEY (colors_id) REFERENCES colors(id)
 );
 
 CREATE TABLE IF NOT EXISTS age_upon_outcome_types (
@@ -68,10 +66,14 @@ CREATE TABLE IF NOT EXISTS animals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     animal_id varchar(10) NOT NULL,
     name varchar(100) CONSTRAINT df_name DEFAULT 'Unnamed',
-    animal_type_id INTEGER,
+    animal_type_breed_id INTEGER,
     date_of_birth datetime NOT NULL,
+    color1_id INTEGER,
+    color2_id INTEGER,
 
-    FOREIGN KEY (animal_type_id) REFERENCES animal_types(id) ON DELETE RESTRICT ON UPDATE CASCADE
+    FOREIGN KEY (animal_type_breed_id) REFERENCES animal_types_breeds(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (color1_id) REFERENCES colors(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (color2_id) REFERENCES colors(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS outcomes (
@@ -87,9 +89,6 @@ CREATE TABLE IF NOT EXISTS outcomes (
     FOREIGN KEY (outcome_type_id) REFERENCES outcome_types(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (animal_id) REFERENCES animals(animal_id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
-
-CREATE INDEX ix_outcome_id ON outcomes (id);
-CREATE INDEX ix_animal_id ON animals (id);
 
 
 -- Temporarily copying original database data from original file --
@@ -110,8 +109,6 @@ CREATE TABLE IF NOT EXISTS orig_table(
 
 INSERT INTO orig_table SELECT * FROM orig_bd.animals;
 
-CREATE INDEX ix_animals_index ON orig_table ("index");
-
 DETACH orig_bd;
 
 
@@ -124,7 +121,13 @@ UPDATE orig_table SET name = 'no_data' WHERE name IS NULL;
 
 -- Prep orig_table data for script enormous speed optimization --
 UPDATE orig_table SET "index" = "index"+1;
+CREATE INDEX ix_animals_index ON orig_table ("index");
 
+-- diversifying data a little bit for testing and learning purposes --
+UPDATE orig_table SET animal_type = 'Dog', name = 'Rex', breed = 'German Dog', color2 = 'brown' WHERE "index" = 12 AND animal_id = 'A681039' AND rowid = 12;
+UPDATE orig_table SET animal_type = 'Turtle', breed = 'Solid' WHERE "index" = 25 AND animal_id = 'A691708' AND rowid = 25;
+UPDATE orig_table SET animal_type = 'Dog', breed = 'Mops' WHERE "index" = 23 AND animal_id = 'A662912' AND rowid = 23;
+UPDATE orig_table SET animal_type = 'Dog', breed = 'Biggle' WHERE "index" = 22 AND animal_id = 'A680225' AND rowid = 22;
 -- Original data ready --
 
 
@@ -132,10 +135,15 @@ UPDATE orig_table SET "index" = "index"+1;
 -- Convert and write original database data to new format --
 
 
--- Filling additional tables --
+-- Filling secondary tables --
 
 INSERT INTO breeds (breed) SELECT DISTINCT TRIM(breed) FROM orig_table;
-INSERT INTO animal_types (animal_type, breed_id) SELECT DISTINCT TRIM(animal_type), (SELECT id FROM breeds WHERE breed = TRIM(orig_table.breed)) FROM orig_table;
+INSERT INTO animal_types (animal_type) SELECT DISTINCT TRIM(animal_type) FROM orig_table;
+
+INSERT INTO animal_types_breeds (animal_type_id, breed_id)
+SELECT DISTINCT animal_types.id, breeds.id FROM animal_types
+    JOIN orig_table ON animal_types.animal_type = orig_table.animal_type
+    JOIN breeds ON orig_table.breed = breeds.breed;
 
 INSERT INTO colors (color) SELECT DISTINCT TRIM(color1) FROM orig_table;
 INSERT INTO colors (color) SELECT DISTINCT TRIM(color2) FROM orig_table WHERE TRIM(color2) NOT IN (SELECT color FROM colors);
@@ -146,7 +154,8 @@ INSERT INTO colors (color) SELECT DISTINCT TRIM(color2) FROM orig_table WHERE TR
 INSERT INTO age_upon_outcome_types (age_upon_outcome_type) VALUES ('days'), ('weeks'), ('months'), ('years');
 
 INSERT INTO outcome_subtypes (outcome_subtype) SELECT DISTINCT TRIM(outcome_subtype) FROM orig_table;
-INSERT INTO outcome_types (outcome_type, outcome_subtype_id) SELECT DISTINCT TRIM(outcome_type), (SELECT id FROM outcome_subtypes WHERE outcome_subtype = orig_table.outcome_subtype) FROM orig_table;
+INSERT INTO outcome_types (outcome_type, outcome_subtype_id)
+SELECT DISTINCT TRIM(outcome_type), (SELECT id FROM outcome_subtypes WHERE outcome_subtype = orig_table.outcome_subtype) FROM orig_table;
 
 
 -- Filling outcomes table --
@@ -170,31 +179,24 @@ CREATE TABLE IF NOT EXISTS outcomes_temp (
     FOREIGN KEY (outcome_type_id) REFERENCES outcome_types(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (animal_id) REFERENCES animals(animal_id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
--- temp table (outcomes) --
 
 INSERT INTO outcomes_temp (outcome_year, outcome_month, animal_id, age_upon_outcome) SELECT outcome_year, outcome_month, animal_id, TRIM(substr(age_upon_outcome, 0, instr(age_upon_outcome, ' '))) FROM orig_table;
 
--- ALTER TABLE outcomes ADD orig_age_upon_outcome_types VARCHAR(50);
 UPDATE outcomes_temp SET orig_age_upon_outcome_types = (SELECT age_upon_outcome FROM orig_table WHERE outcomes_temp.id = orig_table."index");
 UPDATE outcomes_temp SET age_upon_outcome_type_id = (SELECT id FROM age_upon_outcome_types WHERE age_upon_outcome_types.age_upon_outcome_type = TRIM(RTRIM(substr(orig_age_upon_outcome_types, instr(orig_age_upon_outcome_types, ' '), length(orig_age_upon_outcome_types)), 's')) || 's');
 
 
--- ALTER TABLE outcomes ADD orig_outcome_type VARCHAR(50);
--- ALTER TABLE outcomes ADD orig_outcome_subtype VARCHAR(50);
--- ALTER TABLE outcomes ADD orig_outcome_type_id INTEGER;
--- ALTER TABLE outcomes ADD orig_outcome_subtype_id INTEGER;
 UPDATE outcomes_temp SET orig_outcome_type = (SELECT outcome_type FROM orig_table WHERE outcomes_temp.id = orig_table."index");
 UPDATE outcomes_temp SET orig_outcome_subtype = (SELECT outcome_subtype FROM orig_table WHERE outcomes_temp.id = orig_table."index");
 UPDATE outcomes_temp SET orig_outcome_subtype_id = (SELECT id FROM outcome_subtypes WHERE outcomes_temp.orig_outcome_subtype = outcome_subtypes.outcome_subtype);
-UPDATE outcomes_temp SET outcome_type_id = (SELECT outcome_types.id FROM outcome_types
-    LEFT OUTER JOIN outcome_subtypes ON outcome_subtypes.id = outcome_types.outcome_subtype_id
-                                                WHERE outcomes_temp.orig_outcome_type = outcome_type AND outcomes_temp.orig_outcome_subtype_id = outcome_subtype_id);
+UPDATE outcomes_temp SET outcome_type_id =
+    (SELECT outcome_types.id
+     FROM outcome_types
+         LEFT OUTER JOIN outcome_subtypes ON outcome_subtypes.id = outcome_types.outcome_subtype_id
+     WHERE outcomes_temp.orig_outcome_type = outcome_type
+       AND outcomes_temp.orig_outcome_subtype_id = outcome_subtype_id);
+-- temp table (outcomes) created --
 
--- ALTER TABLE outcomes DROP COLUMN orig_age_upon_outcome_types;
--- ALTER TABLE outcomes DROP COLUMN orig_outcome_type;
--- ALTER TABLE outcomes DROP COLUMN orig_outcome_subtype;
--- ALTER TABLE outcomes DROP COLUMN orig_outcome_type_id;
--- ALTER TABLE outcomes DROP COLUMN orig_outcome_subtype_id;
 INSERT INTO outcomes (outcome_year, outcome_month, outcome_type_id, age_upon_outcome, age_upon_outcome_type_id, animal_id)
 SELECT outcome_year, outcome_month, outcome_type_id, age_upon_outcome, age_upon_outcome_type_id, animal_id
 FROM outcomes_temp;
@@ -203,62 +205,67 @@ FROM outcomes_temp;
 
 -- Filling animals table --
 
+INSERT INTO animals (animal_id, name, date_of_birth) SELECT DISTINCT animal_id, name, date_of_birth FROM orig_table;
+
 -- creating temp table (animals) --
 CREATE TABLE IF NOT EXISTS animals_temp (
+    "index" INTEGER,
     animal_id varchar(10) NOT NULL,
     name varchar(100) CONSTRAINT df_name DEFAULT 'Unnamed',
-    animal_type_id INTEGER,
+    animal_type_breed_id INTEGER,
     date_of_birth datetime NOT NULL,
     color1 VARCHAR(50),
     color2 VARCHAR(50),
+    color1_id INTEGER,
+    color2_id INTEGER,
     orig_animal_type VARCHAR(50),
     orig_breed VARCHAR(50),
     orig_animal_type_id INTEGER,
     orig_breed_id INTEGER,
 
-    FOREIGN KEY (animal_type_id) REFERENCES animal_types(id) ON DELETE RESTRICT ON UPDATE CASCADE
+    FOREIGN KEY (animal_type_breed_id) REFERENCES animal_types_breeds(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (color1_id) REFERENCES colors(id),
+    FOREIGN KEY (color2_id) REFERENCES colors(id)
 );
--- temp table (animals) --
 
-INSERT INTO animals_temp (animal_id, name, date_of_birth) SELECT DISTINCT animal_id, name, date_of_birth FROM orig_table;
-
--- ALTER TABLE animals ADD color1 VARCHAR(50);
--- ALTER TABLE animals ADD color2 VARCHAR(50);
-UPDATE animals_temp SET (color1, color2) = (SELECT TRIM(color1), TRIM(color2) FROM orig_table WHERE orig_table.animal_id = animals_temp.animal_id);
-
-INSERT INTO animals_colors (animal_id, colors_id)
-SELECT DISTINCT animals_temp.animal_id, colors.id FROM animals_temp
-JOIN colors ON animals_temp.color1 = colors.color
-UNION ALL
-SELECT DISTINCT animals_temp.animal_id, colors.id FROM animals_temp
-JOIN colors ON animals_temp.color2 = colors.color;
-
-CREATE INDEX ix_animal_colors_index ON animals_colors (animal_id);
-
--- ALTER TABLE animals ADD orig_animal_type VARCHAR(50);
--- ALTER TABLE animals ADD orig_breed VARCHAR(50);
--- ALTER TABLE animals ADD orig_animal_type_id INTEGER;
--- ALTER TABLE animals ADD orig_breed_id INTEGER;
-UPDATE animals_temp SET orig_animal_type = (SELECT animal_type FROM orig_table WHERE animals_temp.animal_id = orig_table.animal_id);
-UPDATE animals_temp SET orig_breed = (SELECT breed FROM orig_table WHERE animals_temp.animal_id = orig_table.animal_id);
-UPDATE animals_temp SET orig_breed_id = (SELECT id FROM breeds WHERE animals_temp.orig_breed = breeds.breed);
-UPDATE animals_temp SET animal_type_id = (SELECT animal_types.id FROM animal_types
-    LEFT OUTER JOIN breeds ON breeds.id = animal_types.breed_id
-                                                WHERE animals_temp.orig_animal_type = animal_type AND animals_temp.orig_breed_id = breed_id);
+INSERT INTO animals_temp ("index", animal_id, name, animal_type_breed_id, date_of_birth, color1, color2, color1_id, color2_id, orig_animal_type, orig_breed, orig_animal_type_id, orig_breed_id)
+SELECT DISTINCT orig_table."index",
+                animals.animal_id,
+                animals.name,
+                animal_types_breeds.id,
+                animals.date_of_birth,
+                TRIM(orig_table.color1),
+                TRIM(orig_table.color2),
+                c1.id,
+                c2.id,
+                orig_table.animal_type,
+                orig_table.breed,
+                animal_types.id,
+                breeds.id
+FROM animals
+    JOIN orig_table ON animals.animal_id = orig_table.animal_id
+    JOIN animal_types ON orig_table.animal_type = animal_types.animal_type
+    JOIN breeds ON orig_table.breed = breeds.breed
+    JOIN animal_types_breeds ON animal_types.id = animal_types_breeds.animal_type_id AND breeds.id = animal_types_breeds.breed_id
+    JOIN colors as c1 ON TRIM(orig_table.color1) = c1.color
+    LEFT OUTER JOIN colors as c2 ON TRIM(orig_table.color2) = c2.color
+WHERE animals.animal_id == orig_table.animal_id
+ORDER BY orig_table."index";
 
 UPDATE animals_temp SET name = NULL WHERE name == 'no_data';
+-- temp table (animals) generated --
 
-INSERT INTO animals (animal_id, name, animal_type_id, date_of_birth)
-SELECT animal_id, name, animal_type_id, date_of_birth FROM animals_temp;
 
--- ALTER TABLE animals DROP COLUMN color1;
--- ALTER TABLE animals DROP COLUMN color2;
--- ALTER TABLE animals DROP COLUMN orig_animal_type;
--- ALTER TABLE animals DROP COLUMN orig_breed;
--- ALTER TABLE animals DROP COLUMN orig_animal_type_id;
--- ALTER TABLE animals DROP COLUMN orig_breed_id;
+UPDATE animals SET (animal_type_breed_id, color1_id, color2_id) =
+    (SELECT animals_temp.animal_type_breed_id,
+            animals_temp.color1_id,
+            animals_temp.color2_id
+     FROM animals_temp
+     WHERE animals.animal_id == animals_temp.animal_id); -- optimization required, maybe "index" column comparison --
 -- Animals table completed --
 
+CREATE INDEX ix_outcome_id ON outcomes (id);
+CREATE INDEX ix_animal_id ON animals (id);
 
 -- Cleanup and Delete original and temp databases data from new file --
 
@@ -266,3 +273,21 @@ DROP TABLE IF EXISTS orig_table;
 DROP TABLE IF EXISTS outcomes_temp;
 DROP TABLE IF EXISTS animals_temp;
 VACUUM;
+
+
+-- Example of many to many normalization --
+
+-- CREATE TABLE IF NOT EXISTS animals_colors (
+--     animal_id varchar(10),
+--     colors_id INTEGER,
+--
+--     FOREIGN KEY (animal_id) REFERENCES animals(animal_id),
+--     FOREIGN KEY (colors_id) REFERENCES colors(id)
+-- );
+
+-- INSERT INTO animals_colors (animal_id, colors_id)
+-- SELECT DISTINCT animals_temp.animal_id, colors.id FROM animals_temp
+-- JOIN colors ON animals_temp.color1 = colors.color
+-- UNION ALL
+-- SELECT DISTINCT animals_temp.animal_id, colors.id FROM animals_temp
+-- JOIN colors ON animals_temp.color2 = colors.color;
